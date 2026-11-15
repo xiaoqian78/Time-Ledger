@@ -91,7 +91,21 @@ DEFAULT_BOOK = "默认账本"
 CARD_HEIGHT = 72
 DELETE_BTN_WIDTH = 72
 
-DATA_FILE = Path(os.environ.get("LEDGER_FILE", Path.home() / ".my_ledger" / "data.json")).resolve()
+# ============================================================
+# 【核心修复】数据存储路径适配安卓
+# ============================================================
+def get_data_file_path() -> Path:
+    env_path = os.environ.get("LEDGER_FILE")
+    if env_path:
+        return Path(env_path).resolve()
+    # 尝试获取 Flet 在安卓下的私有存储目录
+    flet_storage = os.environ.get("FLET_APP_STORAGE_DATA")
+    if flet_storage:
+        return (Path(flet_storage) / "data.json").resolve()
+    # 兜底桌面端
+    return (Path.home() / ".my_ledger" / "data.json").resolve()
+
+DATA_FILE = get_data_file_path()
 _TIME_FORMATS = ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M")
 
 def split_time(date_str: str) -> tuple[str, str]:
@@ -173,11 +187,14 @@ def load_data() -> dict:
     return {"version": 4, "current_book": current, "categories": cats, "books": cleaned_books}
 
 def save_data(data: dict) -> None:
-    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
-    tmp = DATA_FILE.with_name(DATA_FILE.name + ".tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    os.replace(tmp, DATA_FILE)
+    try:
+        DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+        tmp = DATA_FILE.with_name(DATA_FILE.name + ".tmp")
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, DATA_FILE)
+    except Exception as e:
+        print(f"Save error: {e}")
 
 def to_cents(value) -> int: return int(round(float(value) * 100))
 
@@ -201,7 +218,7 @@ def category_stats(records: list[dict]) -> list[tuple[str, int, float]]:
     return [(cat, amt, amt / total) for cat, amt in sorted(totals.items(), key=lambda kv: -kv[1])]
 
 # ============================================================
-# 自定义卡通键盘组件（包含隐藏、回调联动）
+# 自定义卡通键盘组件
 # ============================================================
 C_YELLOW  = "#FFE9A8"   # 数字键
 C_CLEAR   = "#B8E8C8"   # 清空
@@ -1047,10 +1064,10 @@ def main(page: ft.Page):
                 category_input,
                 btn_manage_cat,
             ], spacing=8, vertical_alignment=CrossAxisAlignment.CENTER),
-            amount_display_control, # 移动端的金额框加回来了，点击它弹键盘
+            amount_display_control,
             note_input,
             ft.Container(height=6), 
-            cute_pad,  # 键盘默认是隐藏的，点击上面金额框时显示
+            cute_pad,
         ], spacing=12)
         
         save_btn = None
