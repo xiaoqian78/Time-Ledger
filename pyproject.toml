@@ -1,0 +1,15 @@
+[project]
+# 核心标识符，必须全小写英文，只能用下划线
+name = "shiguang_zhangben" 
+version = "0.1.0"
+description = "拾光账本内测版"
+requires-python = ">=3.9"
+dependencies = [
+    "flet==1.0.5",
+]
+
+[tool.flet]
+# 手机桌面显示的 App 名字，这里可以写中文
+product = "拾光账本"
+# 版本构建号，每次打新包记得加 1
+build_number = 1
