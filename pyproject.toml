@@ -3,7 +3,7 @@
 name = "shiguang_zhangben" 
 version = "0.1.0"
 description = "拾光账本内测版"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "flet==1.0.5",
 ]
